@@ -22,7 +22,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */
+#include "string.h"
+#include "stdio.h"
+#include "semphr.h"
 
+/* USER LIBRARIES */
+#include "transmit.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +63,10 @@ const osThreadAttr_t consumer_attributes = {
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* USER CODE BEGIN PV */
+
+// Define the mutex
+SemaphoreHandle_t mutexData;
+float sharedData = 0;
 
 /* USER CODE END PV */
 
@@ -106,7 +116,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  mutexData = xSemaphoreCreateMutex();
   /* USER CODE END 2 */
 
   /* Init scheduler */
