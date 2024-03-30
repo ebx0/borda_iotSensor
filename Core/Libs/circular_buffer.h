@@ -18,6 +18,7 @@ typedef struct {
 uint8_t buffer_init(buf_handle_t *p_handle);
 uint8_t buffer_insert(buf_handle_t *p_handle, float value);
 uint8_t buffer_extract(buf_handle_t *p_handle);
+uint8_t buffer_clear(buf_handle_t *p_handle, uint8_t num);
 uint8_t buffer_enter_value(buf_handle_t *p_handle, float value);
 uint8_t bufferPrint(buf_handle_t *p_handle);
 uint8_t buffer_get_value(buf_handle_t *p_handle, float *p_sensor_data);

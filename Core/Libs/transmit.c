@@ -81,7 +81,17 @@ void transmit_dataf(UART_HandleTypeDef *huart, const char *str, float num, const
 }
 
 void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle, stats_handle_t *p_stats_handle) {
-	stats_find(p_buf_handle->buffer, p_buf_handle->size, p_stats_handle);
+	float temp_data;
+	float temp_data_array[32];
+	uint8_t index = 0;
+
+	while (p_buf_handle->size){
+	    buffer_get_value(p_buf_handle, &temp_data);
+	    temp_data_array[index] = temp_data;
+		index++;
+	}
+
+	stats_find(temp_data_array, index, p_stats_handle);
 
 	transmit_dataf(huart,"min=", p_stats_handle->min, ",");
 	transmit_dataf(huart,"med=", p_stats_handle->median, ",");

@@ -24,6 +24,7 @@ uint8_t buffer_extract(buf_handle_t *p_handle) {
 uint8_t buffer_clear(buf_handle_t *p_handle, uint8_t num) {
     if (num == 0 || num > p_handle->size) {
     	num = p_handle->size;
+    }
     for (uint8_t i = 0; i < num; i++) {
         buffer_extract(p_handle);
     }

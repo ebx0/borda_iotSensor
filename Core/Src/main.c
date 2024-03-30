@@ -302,11 +302,11 @@ void StartProducerTask(void *argument)
 
 	  float tempFiltered;
 	  tempFiltered = filter_sensor_value(&buf_data_raw, sharedData);
-	  buffer_extract(&buf_data_raw);
 	  buffer_enter_value(&buf_data_filtered, tempFiltered);
 
-	  transmit_dataf(&huart2,"data=",sharedData,",");
-	  transmit_dataf(&huart2,"filtered=",tempFiltered,"\r\n");
+
+	  //transmit_dataf(&huart2,"data=",sharedData,",");
+	  //transmit_dataf(&huart2,"filtered=",tempFiltered,"\r\n");
 
 	  xSemaphoreGive(mutexData);
 	  }
@@ -327,16 +327,9 @@ void StartConsumerTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1000);
+    osDelay(3000);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-		float tempReceived;
-		buffer_get_value(&buf_data_filtered, &tempReceived);
-		transmit_data(&huart2,"filtered_size=",buf_data_filtered.size,",");
-		transmit_data(&huart2,"raw_size=",buf_data_raw.size,",");
-
-
-		transmit_stats(&huart2, &buf_data_filtered, &stats_data);
-
+    	transmit_stats(&huart2, &buf_data_filtered, &stats_data);
 		xSemaphoreGive(mutexData);
 		}
   }
