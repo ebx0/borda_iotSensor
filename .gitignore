@@ -1,0 +1,6 @@
+# CubeIDE files
+.cproject
+.project
+.settings/
+Debug/
+Release/
