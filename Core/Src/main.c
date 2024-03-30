@@ -290,12 +290,10 @@ void StartProducerTask(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		osDelay(250);
+		osDelay(100);
 		if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-			float tempReceived;
-			buffer_get_value(&buf_data_raw, &tempReceived);
-			transmit_dataf(&huart2,"test=",tempReceived,",");
-			transmit_data(&huart2,"size=",buf_data_raw.size,"\r\n");
+			sharedData+=0.10;
+			buffer_enter_value(&buf_data_raw, sharedData);
 			xSemaphoreGive(mutexData);
 			}
 	 }
@@ -315,11 +313,14 @@ void StartConsumerTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(100);
-	xSemaphoreTake(mutexData, portMAX_DELAY);
-	sharedData+=0.10;
-	buffer_enter_value(&buf_data_raw, sharedData);
-	xSemaphoreGive(mutexData);
+    osDelay(1000);
+    if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
+		float tempReceived;
+		buffer_get_value(&buf_data_raw, &tempReceived);
+		transmit_dataf(&huart2,"test=",tempReceived,",");
+		transmit_data(&huart2,"size=",buf_data_raw.size,"\r\n");
+		xSemaphoreGive(mutexData);
+		}
   }
   /* USER CODE END StartConsumerTask */
 }
