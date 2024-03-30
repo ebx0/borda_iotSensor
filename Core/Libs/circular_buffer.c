@@ -21,6 +21,15 @@ uint8_t buffer_extract(buf_handle_t *p_handle) {
     return 0;
 }
 
+uint8_t buffer_clear(buf_handle_t *p_handle, uint8_t num) {
+    if (num == 0 || num > p_handle->size) {
+    	num = p_handle->size;
+    for (uint8_t i = 0; i < num; i++) {
+        buffer_extract(p_handle);
+    }
+    return 0;
+}
+
 uint8_t buffer_enter_value(buf_handle_t *p_handle, float value) {
     if (p_handle->size >= p_handle->capacity) {
         buffer_extract(p_handle);
