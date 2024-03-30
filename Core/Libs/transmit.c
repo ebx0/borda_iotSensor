@@ -93,6 +93,7 @@ void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle, stats
 
 	stats_find(temp_data_array, index, p_stats_handle);
 
+	transmit_data(huart,"size=", index, ",");
 	transmit_dataf(huart,"min=", p_stats_handle->min, ",");
 	transmit_dataf(huart,"med=", p_stats_handle->median, ",");
 	transmit_dataf(huart,"max=", p_stats_handle->max, ",");

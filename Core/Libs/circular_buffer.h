@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define CIRCULAR_BUFFER_SIZE 32
+#define CIRCULAR_BUFFER_SIZE 64
 
 typedef struct {
     float buffer[CIRCULAR_BUFFER_SIZE];

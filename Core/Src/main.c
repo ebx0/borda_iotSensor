@@ -304,10 +304,6 @@ void StartProducerTask(void *argument)
 	  tempFiltered = filter_sensor_value(&buf_data_raw, sharedData);
 	  buffer_enter_value(&buf_data_filtered, tempFiltered);
 
-
-	  //transmit_dataf(&huart2,"data=",sharedData,",");
-	  //transmit_dataf(&huart2,"filtered=",tempFiltered,"\r\n");
-
 	  xSemaphoreGive(mutexData);
 	  }
   }
