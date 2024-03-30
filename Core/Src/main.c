@@ -275,11 +275,16 @@ static void MX_GPIO_Init(void)
 void StartProducerTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	/* Infinite loop */
+	for(;;)
+	{
+		osDelay(250);
+		if (xSemaphoreTake(mutexSimple, portMAX_DELAY) == pdTRUE) {
+			sharedData++;
+			transmitData(&huart2,"test=",sharedData,"\r\n");
+			xSemaphoreGive(mutexSimple);
+			}
+	  }
   /* USER CODE END 5 */
 }
 
@@ -296,7 +301,10 @@ void StartConsumerTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(5000);
+	xSemaphoreTake(mutexSimple, portMAX_DELAY);
+	sharedData = 5;
+	xSemaphoreGive(mutexSimple);
   }
   /* USER CODE END StartConsumerTask */
 }
