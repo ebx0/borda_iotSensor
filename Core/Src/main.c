@@ -30,6 +30,8 @@
 /* USER LIBRARIES */
 #include "transmit.h"
 #include "circular_buffer.h"
+#include "median_filter.h"
+#include "stats.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,6 +70,9 @@ const osThreadAttr_t consumer_attributes = {
 /* BUFFERS */
 buf_handle_t buf_data_raw;
 buf_handle_t buf_data_filtered;
+
+/* STATISTICS  */
+stats_handle_t stats_data;
 
 /* MUTEX */
 SemaphoreHandle_t mutexData;
@@ -287,16 +292,25 @@ static void MX_GPIO_Init(void)
 void StartProducerTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	/* Infinite loop */
-	for(;;)
-	{
-		osDelay(100);
-		if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-			sharedData+=0.10;
-			buffer_enter_value(&buf_data_raw, sharedData);
-			xSemaphoreGive(mutexData);
-			}
-	 }
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(100);
+    if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
+	  sharedData+=0.10;
+	  buffer_enter_value(&buf_data_raw, sharedData);
+
+	  float tempFiltered;
+	  tempFiltered = filter_sensor_value(&buf_data_raw, sharedData);
+	  buffer_extract(&buf_data_raw);
+	  buffer_enter_value(&buf_data_filtered, tempFiltered);
+
+	  transmit_dataf(&huart2,"data=",sharedData,",");
+	  transmit_dataf(&huart2,"filtered=",tempFiltered,"\r\n");
+
+	  xSemaphoreGive(mutexData);
+	  }
+  }
   /* USER CODE END 5 */
 }
 
@@ -316,9 +330,13 @@ void StartConsumerTask(void *argument)
     osDelay(1000);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
 		float tempReceived;
-		buffer_get_value(&buf_data_raw, &tempReceived);
-		transmit_dataf(&huart2,"test=",tempReceived,",");
-		transmit_data(&huart2,"size=",buf_data_raw.size,"\r\n");
+		buffer_get_value(&buf_data_filtered, &tempReceived);
+		transmit_data(&huart2,"filtered_size=",buf_data_filtered.size,",");
+		transmit_data(&huart2,"raw_size=",buf_data_raw.size,",");
+
+
+		transmit_stats(&huart2, &buf_data_filtered, &stats_data);
+
 		xSemaphoreGive(mutexData);
 		}
   }

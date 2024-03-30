@@ -1,6 +1,4 @@
 #include "transmit.h"
-#include <string.h>
-#include <stdio.h>
 
 // Helper function to convert integer to string
 static void int_to_string(int num, char *buffer) {
@@ -80,4 +78,13 @@ void transmit_dataf(UART_HandleTypeDef *huart, const char *str, float num, const
     // Transmit over UART
     HAL_UART_Transmit(huart, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
     HAL_UART_Transmit(huart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+}
+
+void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle, stats_handle_t *p_stats_handle) {
+	stats_find(p_buf_handle->buffer, p_buf_handle->size, p_stats_handle);
+
+	transmit_dataf(huart,"min=", p_stats_handle->min, ",");
+	transmit_dataf(huart,"med=", p_stats_handle->median, ",");
+	transmit_dataf(huart,"max=", p_stats_handle->max, ",");
+	transmit_dataf(huart,"sd=", p_stats_handle->sd, "\r\n");
 }

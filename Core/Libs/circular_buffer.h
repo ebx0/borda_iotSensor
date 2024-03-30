@@ -1,5 +1,5 @@
-#ifndef CIRCULAR_H
-#define CIRCULAR_H
+#ifndef CIRCULAR_BUFFER_H
+#define CIRCULAR_BUFFER_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -15,11 +15,11 @@ typedef struct {
 } buf_handle_t;
 
 
-void buffer_init(buf_handle_t *p_handle);
+uint8_t buffer_init(buf_handle_t *p_handle);
 uint8_t buffer_insert(buf_handle_t *p_handle, float value);
 uint8_t buffer_extract(buf_handle_t *p_handle);
 uint8_t buffer_enter_value(buf_handle_t *p_handle, float value);
 uint8_t bufferPrint(buf_handle_t *p_handle);
 uint8_t buffer_get_value(buf_handle_t *p_handle, float *p_sensor_data);
 
-#endif /* CIRCULAR_H */
+#endif /* CIRCULAR_BUFFER_H */
