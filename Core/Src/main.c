@@ -29,6 +29,7 @@
 
 /* USER LIBRARIES */
 #include "transmit.h"
+#include "circular_buffer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +65,11 @@ const osThreadAttr_t consumer_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-// Define the mutex
+/* BUFFERS */
+buf_handle_t buf_data_raw;
+buf_handle_t buf_data_filtered;
+
+/* MUTEX */
 SemaphoreHandle_t mutexData;
 float sharedData = 0;
 
@@ -116,7 +121,14 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Init Mutex */
   mutexData = xSemaphoreCreateMutex();
+
+  /* Init Circular Buffers */
+  buffer_init(&buf_data_raw);
+  buffer_init(&buf_data_filtered);
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -279,12 +291,13 @@ void StartProducerTask(void *argument)
 	for(;;)
 	{
 		osDelay(250);
-		if (xSemaphoreTake(mutexSimple, portMAX_DELAY) == pdTRUE) {
-			sharedData++;
-			transmitData(&huart2,"test=",sharedData,"\r\n");
-			xSemaphoreGive(mutexSimple);
+		if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
+			float tempReceived;
+			buffer_get_value(&buf_data_raw, &tempReceived);
+			transmit_data(&huart2,"test=",tempReceived,"\r\n");
+			xSemaphoreGive(mutexData);
 			}
-	  }
+	 }
   /* USER CODE END 5 */
 }
 
@@ -302,9 +315,10 @@ void StartConsumerTask(void *argument)
   for(;;)
   {
     osDelay(5000);
-	xSemaphoreTake(mutexSimple, portMAX_DELAY);
-	sharedData = 5;
-	xSemaphoreGive(mutexSimple);
+	xSemaphoreTake(mutexData, portMAX_DELAY);
+	sharedData++;
+	buffer_enter_value(&buf_data_raw, sharedData);
+	xSemaphoreGive(mutexData);
   }
   /* USER CODE END StartConsumerTask */
 }

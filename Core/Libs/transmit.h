@@ -3,6 +3,6 @@
 
 #include "main.h"
 
-void transmitData(UART_HandleTypeDef *huart, const char *str, int num, const char *lineEnding);
+void transmit_data(UART_HandleTypeDef *huart, const char *str, int num, const char *lineEnding);
 
 #endif /* TRANSMIT_DATA_H */

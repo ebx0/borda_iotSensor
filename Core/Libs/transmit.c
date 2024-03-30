@@ -1,7 +1,7 @@
 #include "transmit.h"
 #include <string.h>
 
-void transmitData(UART_HandleTypeDef *huart, const char *str, int num, const char *lineEnding) {
+void transmit_data(UART_HandleTypeDef *huart, const char *str, int num, const char *lineEnding) {
     char buffer[20]; // Buffer to hold the string representation of the integer
     int len = 0;
     int temp = num;
