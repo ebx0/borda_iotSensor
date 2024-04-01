@@ -32,6 +32,7 @@
 #include "circular_buffer.h"
 #include "median_filter.h"
 #include "stats.h"
+#include "timer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +42,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define OSDELAY_BROADCAST_PERIOD 3000
+#define OSDELAY_SAMPLE_PERIOD 100
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,7 +52,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- UART_HandleTypeDef huart2;
+ RTC_HandleTypeDef hrtc;
+
+UART_HandleTypeDef huart2;
 
 /* Definitions for producer */
 osThreadId_t producerHandle;
@@ -84,6 +89,7 @@ float sharedData = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_RTC_Init(void);
 void StartProducerTask(void *argument);
 void StartConsumerTask(void *argument);
 
@@ -125,6 +131,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
   /* Init Mutex */
@@ -202,8 +209,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 8;
@@ -228,6 +236,41 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
+
 }
 
 /**
@@ -295,14 +338,16 @@ void StartProducerTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(100);
+    osDelay(OSDELAY_SAMPLE_PERIOD);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-	  sharedData+=0.10;
+	  sharedData+=1;
 	  buffer_enter_value(&buf_data_raw, sharedData);
+	  transmit_dataf(&huart2, "(Raw=", sharedData, ",");
+	  float filtered_sensor_value;
+	  filtered_sensor_value = filter_sensor_value(&buf_data_raw, sharedData);
+	  transmit_dataf(&huart2, "Filtered=", filtered_sensor_value, ")\n");
 
-	  float tempFiltered;
-	  tempFiltered = filter_sensor_value(&buf_data_raw, sharedData);
-	  buffer_enter_value(&buf_data_filtered, tempFiltered);
+	  buffer_enter_value(&buf_data_filtered, filtered_sensor_value);
 
 	  xSemaphoreGive(mutexData);
 	  }
@@ -323,7 +368,7 @@ void StartConsumerTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(3000);
+    osDelay(OSDELAY_BROADCAST_PERIOD);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
     	transmit_stats(&huart2, &buf_data_filtered, &stats_data);
 		xSemaphoreGive(mutexData);

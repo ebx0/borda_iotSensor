@@ -38,14 +38,21 @@ float filter_sensor_value(buf_handle_t *p_handle, float value) {
 
     float temp_filtered[p_handle->capacity];
 
-    for (int i = 0; i < p_handle->size; i++) {
+    /* ??? */
+    uint8_t window_size = MOV_WINDOW_SIZE; // ??? Really strange but my threads wont work when I took this variable as function argument.
+    window_size = (window_size * 2) - 1; // ??? I really don't know why. but the window works correctly with this equation
+
+    if (p_handle->size < window_size) {
+    	window_size = p_handle->size;
+    }
+
+    for (int i = 0; i < window_size; i++) {
         int n = p_handle->head-1-i;
         if (n < 0){ // Error handling when index is negative
             n = p_handle->size-i;
         }
         temp_filtered[i] = p_handle->buffer[n];
     }
-    float temp_return = findMedian(temp_filtered, p_handle->size);
-
+    float temp_return = findMedian(temp_filtered, window_size);
     return temp_return;
 }
