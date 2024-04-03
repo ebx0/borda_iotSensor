@@ -354,19 +354,19 @@ void StartProducerTask(void *argument)
 	  /* Sensor 1 */
 	  sensor1.raw = generateRandomFloat(100, 200);
 	  buffer_enter_value(&sensor1.buff_raw, sensor1.raw); // Add value to raw value buffer
-	  filter_sensor_value(&sensor1.buff_raw, sensor1.raw, &sensor1.filtered); // Filter and find the filtered value with raw buffer
+	  filter_sensor_value(&sensor1.buff_raw, sensor1.raw, 5, &sensor1.filtered); // Filter and find the filtered value with raw buffer
 	  buffer_enter_value(&sensor1.buff, sensor1.filtered); // Add the filtered value to transmit buffer
 
 	  /* Sensor 2 */
 	  sensor2.raw = generateRandomFloat(400, 1000);
 	  buffer_enter_value(&sensor2.buff_raw, sensor2.raw); // Add value to raw value buffer
-	  filter_sensor_value(&sensor2.buff_raw, sensor2.raw, &sensor2.filtered); // Filter and find the filtered value with raw buffer
+	  filter_sensor_value(&sensor2.buff_raw, sensor2.raw, 5, &sensor2.filtered); // Filter and find the filtered value with raw buffer
 	  buffer_enter_value(&sensor2.buff, sensor2.filtered); // Add the filtered value to transmit buffer
 
 	  /* Sensor 3 */
 	  sensor3.raw = generateRandomFloat(-1000, 1000);
 	  buffer_enter_value(&sensor3.buff_raw, sensor3.raw); // Add value to raw value buffer
-	  filter_sensor_value(&sensor3.buff_raw, sensor3.raw, &sensor3.filtered); // Filter and find the filtered value with raw buffer
+	  filter_sensor_value(&sensor3.buff_raw, sensor3.raw, 5, &sensor3.filtered); // Filter and find the filtered value with raw buffer
 	  buffer_enter_value(&sensor3.buff, sensor3.filtered); // Add the filtered value to transmit buffer
 
 	  xSemaphoreGive(mutexData);
