@@ -33,7 +33,7 @@ static void int_to_string(int num, char *buffer) {
     buffer[i] = '\0';
 }
 
-// Helper function to convert floating-point number to string
+// Helper function to convert floating-point number to string (converts float to int+"."+int then apply int_to_string() fnc.)
 static void float_to_string(float num, char *buffer) {
     int integer_part = (int)num;
     float fractional_part = num - integer_part;
@@ -101,7 +101,7 @@ void transmit_stats(UART_HandleTypeDef *huart, sensor_handle_t *p_sensor_handle)
 
 	stats_find(temp_data_array, index, &stats);
 
-	transmit_data(huart,"ID=", p_sensor_handle->id, ",");
+	transmit_data(huart,"SENSOR_ID=", p_sensor_handle->id, ",");
 	transmit_data(huart,"size=", index, ",");
 	transmit_dataf(huart,"min=", stats.min, ",");
 	transmit_dataf(huart,"med=", stats.median, ",");

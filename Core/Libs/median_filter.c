@@ -28,6 +28,14 @@ float findMedian(float array[], uint8_t array_size) {
     }
 }
 
+/**
+ * @brief Filter function to process raw sensor values using a moving window median filter
+ * @param p_buffer_handle previous raw values to apply filter
+ * @param value raw sensor value to be filtered
+ * @param window_size Size of the moving window
+ * @param filtered_value Pointer to store/return the filtered value
+ * @retval 0 if successful
+ */
 uint8_t filter_sensor_value(buf_handle_t *p_buffer_handle, float value, uint8_t window_size, float *filtered_value) {
 
     if (p_buffer_handle->size >= p_buffer_handle->capacity) {
