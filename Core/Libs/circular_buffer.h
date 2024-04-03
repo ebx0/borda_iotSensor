@@ -7,7 +7,7 @@
 #define CIRCULAR_BUFFER_SIZE 64
 
 typedef struct {
-    float buffer[CIRCULAR_BUFFER_SIZE];
+    float array[CIRCULAR_BUFFER_SIZE];
     uint32_t head;
     uint32_t tail;
     uint32_t size;

@@ -80,10 +80,12 @@ void transmit_dataf(UART_HandleTypeDef *huart, const char *str, float num, const
     HAL_UART_Transmit(huart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 }
 
-void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle, stats_handle_t *p_stats_handle) {
+void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle) {
 	float temp_data;
 	float temp_data_array[32];
 	uint8_t index = 0;
+
+	stats_handle_t stats;
 
 	while (p_buf_handle->size){
 	    buffer_get_value(p_buf_handle, &temp_data);
@@ -91,11 +93,25 @@ void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle, stats
 		index++;
 	}
 
-	stats_find(temp_data_array, index, p_stats_handle);
+	stats_find(temp_data_array, index, &stats);
 
+	transmit_data(huart,"ID=", 1, ",");
 	transmit_data(huart,"size=", index, ",");
-	transmit_dataf(huart,"min=", p_stats_handle->min, ",");
-	transmit_dataf(huart,"med=", p_stats_handle->median, ",");
-	transmit_dataf(huart,"max=", p_stats_handle->max, ",");
-	transmit_dataf(huart,"sd=", p_stats_handle->sd, "\r\n");
+	transmit_dataf(huart,"min=", stats.min, ",");
+	transmit_dataf(huart,"med=", stats.median, ",");
+	transmit_dataf(huart,"max=", stats.max, ",");
+	transmit_dataf(huart,"sd=", stats.sd, "\r\n");
+}
+
+void transmit_time(UART_HandleTypeDef *huart, time_handle_t *p_time_handle) {
+	timer_get(p_time_handle);
+
+	if (p_time_handle->hours < 10){transmit_data(huart,"(0", p_time_handle->hours, "");}
+	else {transmit_data(huart,"(", p_time_handle->hours, "");}
+
+	if (p_time_handle->minutes < 10){transmit_data(huart,":0", p_time_handle->minutes, "");}
+	else {transmit_data(huart,":", p_time_handle->minutes, "");}
+
+	if (p_time_handle->seconds < 10){transmit_data(huart,":0", p_time_handle->seconds, ")\r\n");}
+	else {transmit_data(huart,":", p_time_handle->seconds, ")\r\n");}
 }

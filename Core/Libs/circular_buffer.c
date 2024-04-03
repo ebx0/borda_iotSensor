@@ -9,7 +9,7 @@ uint8_t buffer_init(buf_handle_t *p_handle) {
 }
 
 uint8_t buffer_insert(buf_handle_t *p_handle, float value) {
-    p_handle->buffer[p_handle->head] = value;
+    p_handle->array[p_handle->head] = value;
     p_handle->head = (p_handle->head + 1) % p_handle->capacity;
     p_handle->size++;
     return 0;
@@ -45,7 +45,7 @@ uint8_t buffer_get_value(buf_handle_t *p_handle, float *p_sensor_data) {
     if (p_handle->size == 0)
         return -1;
 
-    *p_sensor_data = p_handle->buffer[p_handle->tail];
+    *p_sensor_data = p_handle->array[p_handle->tail];
     buffer_extract(p_handle);
     return 0;
 }

@@ -33,6 +33,8 @@
 #include "median_filter.h"
 #include "stats.h"
 #include "timer.h"
+#include "sensors.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,16 +74,20 @@ const osThreadAttr_t consumer_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-/* BUFFERS */
-buf_handle_t buf_data_raw;
-buf_handle_t buf_data_filtered;
+/* RTC */
+time_handle_t currentTime;
 
-/* STATISTICS  */
-stats_handle_t stats_data;
+/* SENSOR STRUCTS */
+sensor_handle_t sensor1;
+sensor_handle_t sensor2;
+sensor_handle_t sensor3;
+
+/* ONE CHAR BUFFERS */
+float value_raw = 0;
+float value_filtered = 0;
 
 /* MUTEX */
 SemaphoreHandle_t mutexData;
-float sharedData = 0;
 
 /* USER CODE END PV */
 
@@ -99,7 +105,6 @@ void StartConsumerTask(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -134,12 +139,16 @@ int main(void)
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Init Mutex */
-  mutexData = xSemaphoreCreateMutex();
+  /* INIT RTC */
+  timer_init();
 
-  /* Init Circular Buffers */
-  buffer_init(&buf_data_raw);
-  buffer_init(&buf_data_filtered);
+  /* INIT SENSORS */
+  sensor_init(&sensor1, 1);
+  sensor_init(&sensor2, 2);
+  sensor_init(&sensor3, 3);
+
+  /* INIT MUTEX */
+  mutexData = xSemaphoreCreateMutex();
 
   /* USER CODE END 2 */
 
@@ -340,14 +349,18 @@ void StartProducerTask(void *argument)
   {
     osDelay(OSDELAY_SAMPLE_PERIOD);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-	  sharedData+=1;
-	  buffer_enter_value(&buf_data_raw, sharedData);
-	  transmit_dataf(&huart2, "(Raw=", sharedData, ",");
-	  float filtered_sensor_value;
-	  filtered_sensor_value = filter_sensor_value(&buf_data_raw, sharedData);
-	  transmit_dataf(&huart2, "Filtered=", filtered_sensor_value, ")\n");
+	  value_raw+=1;
+//	  transmit_dataf(&huart2, "(Raw=", value_raw, ",");
+//	  transmit_dataf(&huart2, "Filtered=", filtered_sensor_value, ")\n");
 
-	  buffer_enter_value(&buf_data_filtered, filtered_sensor_value);
+	  buffer_enter_value(&sensor1.buff_raw, value_raw);
+
+	  value_filtered = filter_sensor_value(&sensor1, value_raw);
+
+	  //buffer_enter_value(&sensor1.buff, value_filtered);
+	  transmit_dataf(&huart2, "(", value_filtered, ") ");
+
+	  //transmit_dataf(&huart2, "*", sensor1.buff_raw.array[1], "* ");
 
 	  xSemaphoreGive(mutexData);
 	  }
@@ -370,7 +383,13 @@ void StartConsumerTask(void *argument)
   {
     osDelay(OSDELAY_BROADCAST_PERIOD);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-    	transmit_stats(&huart2, &buf_data_filtered, &stats_data);
+
+    	/* RTC */
+    	transmit_time(&huart2, &currentTime);
+
+    	/* Calculate and Send Statistics */
+    	transmit_stats(&huart2, &sensor1.buff);
+
 		xSemaphoreGive(mutexData);
 		}
   }
