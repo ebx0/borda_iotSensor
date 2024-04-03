@@ -62,14 +62,14 @@ UART_HandleTypeDef huart2;
 osThreadId_t producerHandle;
 const osThreadAttr_t producer_attributes = {
   .name = "producer",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for consumer */
 osThreadId_t consumerHandle;
 const osThreadAttr_t consumer_attributes = {
   .name = "consumer",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* USER CODE BEGIN PV */
@@ -81,10 +81,6 @@ time_handle_t currentTime;
 sensor_handle_t sensor1;
 sensor_handle_t sensor2;
 sensor_handle_t sensor3;
-
-/* ONE CHAR BUFFERS */
-float value_raw = 0;
-float value_filtered = 0;
 
 /* MUTEX */
 SemaphoreHandle_t mutexData;
@@ -331,7 +327,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+// CHATGPT:
+// Function to generate a random float value within a specified range
+float generateRandomFloat(float min, float max) {
+    float scale = rand() / (float)RAND_MAX; // Generate a random float between 0 and 1
+    return min + scale * (max - min); // Scale the random value to the desired range
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartProducerTask */
@@ -349,18 +350,24 @@ void StartProducerTask(void *argument)
   {
     osDelay(OSDELAY_SAMPLE_PERIOD);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
-	  value_raw+=1;
-//	  transmit_dataf(&huart2, "(Raw=", value_raw, ",");
-//	  transmit_dataf(&huart2, "Filtered=", filtered_sensor_value, ")\n");
 
-	  buffer_enter_value(&sensor1.buff_raw, value_raw);
+	  /* Sensor 1 */
+	  sensor1.raw = generateRandomFloat(100, 200);
+	  buffer_enter_value(&sensor1.buff_raw, sensor1.raw); // Add value to raw value buffer
+	  filter_sensor_value(&sensor1.buff_raw, sensor1.raw, &sensor1.filtered); // Filter and find the filtered value with raw buffer
+	  buffer_enter_value(&sensor1.buff, sensor1.filtered); // Add the filtered value to transmit buffer
 
-	  value_filtered = filter_sensor_value(&sensor1, value_raw);
+	  /* Sensor 2 */
+	  sensor2.raw = generateRandomFloat(400, 1000);
+	  buffer_enter_value(&sensor2.buff_raw, sensor2.raw); // Add value to raw value buffer
+	  filter_sensor_value(&sensor2.buff_raw, sensor2.raw, &sensor2.filtered); // Filter and find the filtered value with raw buffer
+	  buffer_enter_value(&sensor2.buff, sensor2.filtered); // Add the filtered value to transmit buffer
 
-	  //buffer_enter_value(&sensor1.buff, value_filtered);
-	  transmit_dataf(&huart2, "(", value_filtered, ") ");
-
-	  //transmit_dataf(&huart2, "*", sensor1.buff_raw.array[1], "* ");
+	  /* Sensor 3 */
+	  sensor3.raw = generateRandomFloat(-1000, 1000);
+	  buffer_enter_value(&sensor3.buff_raw, sensor3.raw); // Add value to raw value buffer
+	  filter_sensor_value(&sensor3.buff_raw, sensor3.raw, &sensor3.filtered); // Filter and find the filtered value with raw buffer
+	  buffer_enter_value(&sensor3.buff, sensor3.filtered); // Add the filtered value to transmit buffer
 
 	  xSemaphoreGive(mutexData);
 	  }
@@ -388,7 +395,9 @@ void StartConsumerTask(void *argument)
     	transmit_time(&huart2, &currentTime);
 
     	/* Calculate and Send Statistics */
-    	transmit_stats(&huart2, &sensor1.buff);
+    	transmit_stats(&huart2, &sensor1);
+    	transmit_stats(&huart2, &sensor2);
+    	transmit_stats(&huart2, &sensor3);
 
 		xSemaphoreGive(mutexData);
 		}

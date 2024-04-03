@@ -80,22 +80,22 @@ void transmit_dataf(UART_HandleTypeDef *huart, const char *str, float num, const
     HAL_UART_Transmit(huart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 }
 
-void transmit_stats(UART_HandleTypeDef *huart, buf_handle_t *p_buf_handle) {
+void transmit_stats(UART_HandleTypeDef *huart, sensor_handle_t *p_sensor_handle) {
 	float temp_data;
 	float temp_data_array[32];
 	uint8_t index = 0;
 
 	stats_handle_t stats;
 
-	while (p_buf_handle->size){
-	    buffer_get_value(p_buf_handle, &temp_data);
+	while (p_sensor_handle->buff.size){
+	    buffer_get_value(&p_sensor_handle->buff, &temp_data);
 	    temp_data_array[index] = temp_data;
 		index++;
 	}
 
 	stats_find(temp_data_array, index, &stats);
 
-	transmit_data(huart,"ID=", 1, ",");
+	transmit_data(huart,"ID=", p_sensor_handle->id, ",");
 	transmit_data(huart,"size=", index, ",");
 	transmit_dataf(huart,"min=", stats.min, ",");
 	transmit_dataf(huart,"med=", stats.median, ",");

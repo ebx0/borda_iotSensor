@@ -1,7 +1,7 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
 
-#define MOV_WINDOW_SIZE 5
+#define MOV_WINDOW_SIZE 10
 
 #include <stdint.h>
 #include <stddef.h>
@@ -15,6 +15,6 @@
 
 int compareFloats(const void *a, const void *b);
 float findMedian(float array[], uint8_t);
-float filter_sensor_value(sensor_handle_t *p_sensor_handle, float value);
+uint8_t filter_sensor_value(buf_handle_t*, float, float*);
 
 #endif /* MEDIAN_FILTER_H */
