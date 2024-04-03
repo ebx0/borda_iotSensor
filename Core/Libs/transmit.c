@@ -48,7 +48,13 @@ static void float_to_string(float num, char *buffer) {
     buffer[len++] = '.';
 
     // Convert fractional part to string
-    int_to_string((int)(fractional_part * 100), buffer + len);
+    if ( fractional_part > 0 ) { // If number is negative, dont write it like -12.-23 just -12.23
+    	int_to_string((int)(fractional_part * 100), buffer + len);
+    } else {
+    	int_to_string((int)(-fractional_part * 100), buffer + len);
+    }
+
+
 }
 
 void transmit_data(UART_HandleTypeDef *huart, const char *str, int num, const char *lineEnding) {
