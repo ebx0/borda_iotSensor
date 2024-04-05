@@ -21,6 +21,7 @@ float generateRandomFloat(float min, float max) {
 
 // Reads the sensor data and stores in .raw variable
 uint8_t sensor_read(sensor_handle_t *p_sensor_handle){
+	// Fake sensor data creation:
 	if (p_sensor_handle->addr == LIGHT) {
 		p_sensor_handle->raw = generateRandomFloat(150, 200);
 	}
