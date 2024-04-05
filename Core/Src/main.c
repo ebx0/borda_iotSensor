@@ -22,7 +22,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-/* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
 #include "semphr.h"
@@ -44,8 +43,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define OSDELAY_BROADCAST_PERIOD 3000
-#define OSDELAY_SAMPLE_PERIOD 100
+#define OSDELAY_BROADCAST_PERIOD 30000
+#define OSDELAY_SAMPLE_PERIOD 1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -72,15 +71,14 @@ const osThreadAttr_t consumer_attributes = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
+
 /* USER CODE BEGIN PV */
 
 /* RTC */
 time_handle_t currentTime;
 
 /* SENSOR STRUCTS */
-sensor_handle_t sensor1;
-sensor_handle_t sensor2;
-sensor_handle_t sensor3;
+sensor_handle_t sensors[3];
 
 /* MUTEX */
 SemaphoreHandle_t mutexData;
@@ -139,9 +137,9 @@ int main(void)
   timer_init();
 
   /* INIT SENSORS */
-  sensor_init(&sensor1, 1);
-  sensor_init(&sensor2, 2);
-  sensor_init(&sensor3, 3);
+  sensor_init(&sensors[LIGHT], 0x00, "Fake Light Sensor");
+  sensor_init(&sensors[TEMP], 0x01, "Fake Temp. Sensor");
+  sensor_init(&sensors[CO2], 0x02, "Fake CO_2  Sensor");
 
   /* INIT MUTEX */
   mutexData = xSemaphoreCreateMutex();
@@ -294,7 +292,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9800;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -327,12 +325,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-// CHATGPT:
-// Function to generate a random float value within a specified range
-float generateRandomFloat(float min, float max) {
-    float scale = rand() / (float)RAND_MAX; // Generate a random float between 0 and 1
-    return min + scale * (max - min); // Scale the random value to the desired range
-}
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartProducerTask */
@@ -351,23 +344,13 @@ void StartProducerTask(void *argument)
     osDelay(OSDELAY_SAMPLE_PERIOD);
     if (xSemaphoreTake(mutexData, portMAX_DELAY) == pdTRUE) {
 
-	  /* Sensor 1 */
-	  sensor1.raw = generateRandomFloat(100, 200);
-	  buffer_enter_value(&sensor1.buff_raw, sensor1.raw); // Add value to raw value buffer
-	  filter_sensor_value(&sensor1.buff_raw, sensor1.raw, 5, &sensor1.filtered); // Filter and find the filtered value with raw buffer
-	  buffer_enter_value(&sensor1.buff, sensor1.filtered); // Add the filtered value to transmit buffer
-
-	  /* Sensor 2 */
-	  sensor2.raw = generateRandomFloat(400, 1000);
-	  buffer_enter_value(&sensor2.buff_raw, sensor2.raw); // Add value to raw value buffer
-	  filter_sensor_value(&sensor2.buff_raw, sensor2.raw, 5, &sensor2.filtered); // Filter and find the filtered value with raw buffer
-	  buffer_enter_value(&sensor2.buff, sensor2.filtered); // Add the filtered value to transmit buffer
-
-	  /* Sensor 3 */
-	  sensor3.raw = generateRandomFloat(-1000, 1000);
-	  buffer_enter_value(&sensor3.buff_raw, sensor3.raw); // Add value to raw value buffer
-	  filter_sensor_value(&sensor3.buff_raw, sensor3.raw, 5, &sensor3.filtered); // Filter and find the filtered value with raw buffer
-	  buffer_enter_value(&sensor3.buff, sensor3.filtered); // Add the filtered value to transmit buffer
+	  /* Sensor Read-Filter-Buffer */
+        for (int i = 0; i < LAST_SENSOR; i++) {
+            sensor_read(&sensors[i]); // Reads sensor and stores the data in .raw
+            buffer_enter_value(&sensors[i].buff_raw, sensors[i].raw);
+            filter_sensor_value(&sensors[i].buff_raw, sensors[i].raw, 5, &sensors[i].filtered);
+            buffer_enter_value(&sensors[i].buff, sensors[i].filtered);
+        }
 
 	  xSemaphoreGive(mutexData);
 	  }
@@ -395,12 +378,12 @@ void StartConsumerTask(void *argument)
     	transmit_time(&huart2, &currentTime);
 
     	/* Calculate and Send Statistics */
-    	transmit_stats(&huart2, &sensor1);
-    	transmit_stats(&huart2, &sensor2);
-    	transmit_stats(&huart2, &sensor3);
+    	for (int i = 0; i < LAST_SENSOR; i++) {
+    		transmit_stats(&huart2, &sensors[i]);
+    	}
 
 		xSemaphoreGive(mutexData);
-		}
+	}
   }
   /* USER CODE END StartConsumerTask */
 }

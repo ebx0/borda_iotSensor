@@ -47,7 +47,6 @@ uint8_t filter_sensor_value(buf_handle_t *p_buffer_handle, float value, uint8_t 
 
     float temp_buffer[p_buffer_handle->capacity];
 
-    /* ??? */
     window_size = (window_size * 2) - 1; // ??? I really don't know why. but the window only works correctly with this equation
 
     if (p_buffer_handle->size < window_size) {

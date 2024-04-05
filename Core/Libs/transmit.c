@@ -86,6 +86,7 @@ void transmit_dataf(UART_HandleTypeDef *huart, const char *str, float num, const
     HAL_UART_Transmit(huart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 }
 
+// transmit all of the sensor statistics with one fnc
 void transmit_stats(UART_HandleTypeDef *huart, sensor_handle_t *p_sensor_handle) {
 	float temp_data;
 	float temp_data_array[32];
@@ -101,14 +102,20 @@ void transmit_stats(UART_HandleTypeDef *huart, sensor_handle_t *p_sensor_handle)
 
 	stats_find(temp_data_array, index, &stats);
 
-	transmit_data(huart,"SENSOR_ID=", p_sensor_handle->id, ",");
-	transmit_data(huart,"size=", index, ",");
-	transmit_dataf(huart,"min=", stats.min, ",");
-	transmit_dataf(huart,"med=", stats.median, ",");
-	transmit_dataf(huart,"max=", stats.max, ",");
-	transmit_dataf(huart,"sd=", stats.sd, "\r\n");
+	// Prints sensor name
+	char buffer[50];
+	snprintf(buffer, sizeof(buffer), "sensor_name=\"%s\",", p_sensor_handle->sensor_name);
+	HAL_UART_Transmit(huart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+	// Prints other statistics
+	transmit_data(huart,"id=", p_sensor_handle->addr, ","); // Unique id of array
+	transmit_data(huart,"size=", index, ","); // Item size of array
+	transmit_dataf(huart,"min=", stats.min, ","); // Min value of array
+	transmit_dataf(huart,"med=", stats.median, ","); // Median value of array
+	transmit_dataf(huart,"max=", stats.max, ","); // Maximum value of array
+	transmit_dataf(huart,"std_deviation=", stats.sd, "\r\n"); // Standart Derivation of array
 }
 
+// transmit real time in UART. With a defined format
 void transmit_time(UART_HandleTypeDef *huart, time_handle_t *p_time_handle) {
 	timer_get(p_time_handle);
 
